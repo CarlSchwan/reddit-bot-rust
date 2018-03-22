@@ -5,3 +5,4 @@ authors = ["Carl Schwan <schwancarl@protonmail.com>"]
 
 [dependencies]
 orca = "0.5.0"
+regex = "0.2"
