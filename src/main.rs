@@ -52,7 +52,7 @@ fn between(c:&char,  a: char, b: char) -> bool {
     *c >= a && *c <= b
 }
 
-fn addWordToDatabase <'a> (word: String, subreddit:&String, mut database:Database) -> Database {
+fn add_word_to_database <'a> (word: String, subreddit:&String, mut database:Database) -> Database {
     let mut sub = String::new();
     sub.clone_from(subreddit);
     let clean_word = String::from(word.trim_matches( | c | !(between(&c,'a','z') || between(&c,'A', 'Z') || between(&c, '0', '9'))).to_lowercase());
@@ -65,17 +65,17 @@ fn addWordToDatabase <'a> (word: String, subreddit:&String, mut database:Databas
     database
 }
 
-fn addToDatabase (comment: Comment, data:Database) -> Database {
+fn add_to_database (comment: Comment, data:Database) -> Database {
     comment.body.split_whitespace().fold(data, | mut data, word | { 
         data.1 += 1;
-        addWordToDatabase(String::from(word), &comment.subreddit, data) 
+        add_word_to_database(String::from(word), &comment.subreddit, data) 
     })
 }
 
 fn analyse_last_n_comments(n: usize, reddit:App) -> Database {
     let mut data = Database::new();
     for comment in reddit.create_comment_stream("all").take(n) {
-        data = addToDatabase(comment, data);
+        data = add_to_database(comment, data);
     }
     data
 }
@@ -117,7 +117,7 @@ fn polling(reddit:App) {
             let new_comments = comments.take_while( |x| x.id != last_viewed);
             for c in new_comments {
                 //println!("id : {}", c.id);
-                h = addToDatabase(c, h);
+                h = add_to_database(c, h);
             }
         }
         last_viewed = new_last_viewed.clone();
