@@ -14,7 +14,7 @@ static TESTING : bool = true;
 
 fn main() {
     let reddit = App::new("orca_stream_example", "1.0", "/u/ognarb1").unwrap();
-    polling(reddit);
+    print!("{}", analyse_last_n_comments(1000, reddit));
 }
 
 struct DatabaseEntry (HashMap<String, i64>, i64);
@@ -39,7 +39,7 @@ impl fmt::Display for Database {
         for (occurences, word) in self.sort() {
             write!(f, "{} times {}\n", occurences, word);
         }
-        write!(f, "Found {} words :\n", self.1)
+        write!(f, "Analysed {} Words!\n", self.1)
     }
 }
 
@@ -61,9 +61,18 @@ fn addWordToDatabase <'a> (word: String, subreddit:&String, mut database:Databas
 }
 
 fn addToDatabase (comment: Comment, data:Database) -> Database {
-    let mut updated = comment.body.split_whitespace().fold(data, | data, word | { addWordToDatabase(String::from(word), &comment.subreddit, data) });
-    updated.1 += 1;
-    updated
+    comment.body.split_whitespace().fold(data, | mut data, word | { 
+        data.1 += 1;
+        addWordToDatabase(String::from(word), &comment.subreddit, data) 
+    })
+}
+
+fn analyse_last_n_comments(n: usize, reddit:App) -> Database {
+    let mut data = Database::new();
+    for comment in reddit.create_comment_stream("all").take(n) {
+        data = addToDatabase(comment, data);
+    }
+    data
 }
 
 fn polling(reddit:App) {
