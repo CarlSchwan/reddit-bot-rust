@@ -2,19 +2,24 @@ extern crate orca;
 extern crate regex;
 
 use std::cmp::Ordering;
+use std::vec::Vec;
 use std::collections::BinaryHeap;
 use orca::App;
 use orca::data::{Comment};
 use std::{thread, time};
 use std::collections::HashMap;
 use std::fmt;
+use regex::Regex;
 
 static UPDATE_INTERVAL_IN_SECONDS : u64 = 3;
 static TESTING : bool = true;
 
 fn main() {
     let reddit = App::new("orca_stream_example", "1.0", "/u/ognarb1").unwrap();
-    print!("{}", analyse_last_n_comments(1000, reddit));
+    //print!("{}", analyse_last_n_comments(1000000, reddit));
+    for name in find_missing_images_in_last_n_comments(1000, reddit) {
+        println!("{}", name);
+    }
 }
 
 struct DatabaseEntry (HashMap<String, i64>, i64);
@@ -73,6 +78,18 @@ fn analyse_last_n_comments(n: usize, reddit:App) -> Database {
         data = addToDatabase(comment, data);
     }
     data
+}
+
+fn find_missing_images_in_last_n_comments(n:usize, reddit:App) -> Vec<String> {
+    let mut image_names = Vec::new();
+    let matcher = Regex::new(r"[ \t\n]([^ /]*\.jpg)").unwrap();
+    for comment in reddit.create_comment_stream("all").take(n) {
+        for found_name in matcher.captures_iter(&comment.body) {
+            let copy = String::from(&found_name[0]);
+            image_names.push(copy);
+        }
+    }
+    image_names
 }
 
 fn polling(reddit:App) {
